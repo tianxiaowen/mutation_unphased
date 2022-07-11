@@ -1,6 +1,6 @@
 This repository provides resources for mutation rate estimation using the methods developed in the manuscript *Estimating the genome-wide mutation rate from thousands of unrelated individuals* by Tian et al.
 
-The detailed analysis pipeline is outlined in example_analysis_pipeline.md.
+The detailed analysis pipeline is outlined in [example_analysis_pipeline.md](https://github.com/tianxiaowen/mutation_unphased/blob/main/example_analysis_pipeline.md).
 Additional scripts called in example_analysis_pipeline.md can be found in the following links.
 
 - IBD detection with [hap-ibd](https://github.com/browning-lab/hap-ibd)
