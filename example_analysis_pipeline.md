@@ -1,8 +1,3 @@
----
-output:
-  pdf_document: default
-  html_document: default
----
 # Mutation rate estimation
 
 This is an example pipeline for estimating mutation rate from phased genotype data using the methods developed in the manuscript *Estimating the genome-wide mutation rate from thousands of unrelated individuals* by Tian et al. The pipeline includes the following steps:   
