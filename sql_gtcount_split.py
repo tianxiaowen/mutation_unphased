@@ -12,6 +12,7 @@ ibdfile = sys.argv[4]
 mapfile = sys.argv[5]
 idfile = sys.argv[6]
 triobin = int(sys.argv[7])
+use.phase = sys.argv[8]
 
 connex1 = sqlite3.connect(db1)
 connex2 = sqlite3.connect(db2)
@@ -131,44 +132,49 @@ for q in range(1,len(trioid)+1):
         else:
           sepcount[k][1] = sepcount[k][1]+0
     ## rare variants
-    vcfi = pd.read_sql_query(sql1, connex1)
-    vcfgt = vcfi.iloc[:,0].map(str)+vcfi.iloc[:,1].map(str)+vcfi.iloc[:,2].map(str)+vcfi.iloc[:,3].map(str)+vcfi.iloc[:,4].map(str)+vcfi.iloc[:,5].map(str)
-    c34 = (vcfgt=='111100') | (vcfgt=='111000') | (vcfgt=='110100') | (vcfgt=='011100')
-    c34 = sum(c34)
-    c20tf = (vcfgt=='101000') | (vcfgt=='100100') | (vcfgt=='011000') | (vcfgt=='010100')
-    c20 = sum(c20tf)
-    sepcount[k][0]=sepcount[k][0]+c34+c20
-    if c20>0:
-      index = np.where(c20tf==True)[0]
-      id1 = ids[hapindex[0]-1]
-      id2 = ids[hapindex[1]-1]
-      def carrier(ibdid):
-        otherid = otherallele(ibdid)
-        ex = np.zeros(c20).astype(int)
-        for m in range(c20):
-          countpos = vcfi.loc[index[m],'POS']
-          posibd = ibd[(ibd['hap1']==otherid) | (ibd['hap2']==otherid)]
-          posibd = posibd[(posibd['starttrim']<=countpos) & (posibd['endtrim']>=countpos)]
-          if len(posibd)>0:
-            posid = posibd.iloc[:,0].append(posibd.iloc[:,1]).sort_values().unique()
-            posid = posid[posid!=otherid]
-            ## check it and it's other haplotype are not ibd with IBD haplotype
-            checkibd = ibd[(ibd['hap1']==ibdid) | (ibd['hap2']==ibdid)] 
-            checkibd = checkibd[(checkibd['starttrim']<=countpos) & (checkibd['endtrim']>=countpos)]
-            checkid = checkibd.iloc[:,0].append(checkibd.iloc[:,1]).sort_values().unique() 
-            otherposid = otherallele(posid)
-            posid = posid[(np.isin(posid,checkid)+np.isin(otherposid,checkid))==0]
-            if len(posid)>0:
-              otherposid = otherallele(posid)  
-              for j in range(len(posid)):
-                vcfidj = -(-posid[j]//1000)
-                sqlj = 'SELECT HAP'+str(posid[j])+', HAP'+str(otherposid[j])+', POS FROM vcf'+str(vcfidj)+', vcfinfo WHERE vcf'+str(vcfidj)+'."index" = vcfinfo."index" AND vcfinfo.POS = '+str(countpos)
-                vcfj = pd.read_sql_query(sqlj, connex1)
-                ex[m] = ex[m]+(vcfj.iloc[:,0]==1)|(vcfj.iloc[:,1]==1)
-                # exclude if either is 1
-        return(ex)
-      exclude = (carrier(id1)+carrier(id2))>0
-      sepcount[k][0]=sepcount[k][0]-sum(exclude)
+    if use.phase.lower() == 'true':
+      vcfi = pd.read_sql_query(sql2, connex1)
+      raretf = ((vcfi.iloc[:,0]==1)&(vcfi.iloc[:,1]==1)&(vcfi.iloc[:,2]==0))
+      sepcount[k][0] = sepcount[k][0] + raretf.sum() 
+    else:
+      vcfi = pd.read_sql_query(sql1, connex1)
+      vcfgt = vcfi.iloc[:,0].map(str)+vcfi.iloc[:,1].map(str)+vcfi.iloc[:,2].map(str)+vcfi.iloc[:,3].map(str)+vcfi.iloc[:,4].map(str)+vcfi.iloc[:,5].map(str)
+      c34 = (vcfgt=='111100') | (vcfgt=='111000') | (vcfgt=='110100') | (vcfgt=='011100')
+      c34 = sum(c34)
+      c20tf = (vcfgt=='101000') | (vcfgt=='100100') | (vcfgt=='011000') | (vcfgt=='010100')
+      c20 = sum(c20tf)
+      sepcount[k][0]=sepcount[k][0]+c34+c20
+      if c20>0:
+        index = np.where(c20tf==True)[0]
+        id1 = ids[hapindex[0]-1]
+        id2 = ids[hapindex[1]-1]
+        def carrier(ibdid):
+          otherid = otherallele(ibdid)
+          ex = np.zeros(c20).astype(int)
+          for m in range(c20):
+            countpos = vcfi.loc[index[m],'POS']
+            posibd = ibd[(ibd['hap1']==otherid) | (ibd['hap2']==otherid)]
+            posibd = posibd[(posibd['starttrim']<=countpos) & (posibd['endtrim']>=countpos)]
+            if len(posibd)>0:
+              posid = posibd.iloc[:,0].append(posibd.iloc[:,1]).sort_values().unique()
+              posid = posid[posid!=otherid]
+              ## check it and it's other haplotype are not ibd with IBD haplotype
+              checkibd = ibd[(ibd['hap1']==ibdid) | (ibd['hap2']==ibdid)] 
+              checkibd = checkibd[(checkibd['starttrim']<=countpos) & (checkibd['endtrim']>=countpos)]
+              checkid = checkibd.iloc[:,0].append(checkibd.iloc[:,1]).sort_values().unique() 
+              otherposid = otherallele(posid)
+              posid = posid[(np.isin(posid,checkid)+np.isin(otherposid,checkid))==0]
+              if len(posid)>0:
+                otherposid = otherallele(posid)  
+                for j in range(len(posid)):
+                  vcfidj = -(-posid[j]//1000)
+                  sqlj = 'SELECT HAP'+str(posid[j])+', HAP'+str(otherposid[j])+', POS FROM vcf'+str(vcfidj)+', vcfinfo WHERE vcf'+str(vcfidj)+'."index" = vcfinfo."index" AND vcfinfo.POS = '+str(countpos)
+                  vcfj = pd.read_sql_query(sqlj, connex1)
+                  ex[m] = ex[m]+(vcfj.iloc[:,0]==1)|(vcfj.iloc[:,1]==1)
+                  # exclude if either is 1
+          return(ex)
+        exclude = (carrier(id1)+carrier(id2))>0
+        sepcount[k][0]=sepcount[k][0]-sum(exclude)
 
 
   mugc = pd.DataFrame(data = {'type':["12-3","13-2","23-1"],'rare':sepcount[:,0].tolist(),'common':sepcount[:,1].tolist(),'len':[newover,newover,newover]})
