@@ -153,7 +153,39 @@ done
 Rscript het.R
 ```
 
-Now we are ready to conduct a two-stage likelihood calculation to estimate the mutation rate. We use the software [`addGC.v3.jar`](https://github.com/tianxiaowen/mutation_unphased/blob/main/addGC.v3.jar). In the first stage, we find MLEs for the two error rates $\epsilon_1$ and $\epsilon_2$ seperately. In the code below, `mapfile` denotes path to the genetic map file, `Nefile` denotes path to the output .ne file by IBDNe, and `hetrate1` and `hetrate2` denote the estimated heterozygosity rates using [`het.R`](https://github.com/tianxiaowen/mutation_unphased/blob/main/het.R) above.
+Now we are ready to conduct a two-stage likelihood calculation to estimate the mutation rate. We use the software [`addGC.v3.jar`](https://github.com/tianxiaowen/mutation_unphased/blob/main/addGC.v3.jar).
+```
+usage: cat [ibd] | java -jar addGC.v3.jar [args]
+
+where: 
+  [ibd]  = a space-separated list of trio-mutation files
+  [args] = a space-separated list of algorithm parameters
+
+Algorithm Parameters: 
+  map=<PLINK-format genetic map with cM distances>  (required)
+  ne=<IBDNe .ne output file>                        (required)
+  out=<output file prefix>                          (required)
+  ng1=<max generations to first coalescence>        (default=100)
+  ng2=<max generations from 1st to 2nd coalescence> (default=100)
+  mu.start=<min mutation rate>                      (default=1.21E-8)
+  mu.end=<max mutation rate>                        (default=1.29E-8)
+  mu.step=<step for grid search>                    (default=1.0E-10)
+  gc.start=<min gene conversion rate>               (default=5.0E-7)
+  gc.end=<max gene conversion rate>                 (default=2.5E-6)
+  gc.step=<step for grid search>                    (default=5.0E-7)
+  theta1=<average heterozygosity for first bin>     (default=1.0E-4)
+  theta2=<average heterozygosity for second bin>    (default=5.0E-4)
+  err1.start=<min error rate for first bin>                        (default=0.0)
+  err1.end=<max error rate for first bin>                          (default=1.0E-7)
+  err1.ratio=<ratio >1 for logorithmic grid search for first bin>  (default=10.0)
+  err2.start=<min error rate for second bin>                        (default=0.0)
+  err2.end=<max error rate for second bin>                          (default=1.0E-7)
+  err2.ratio=<ratio >1 for logorithmic grid search for second bin>  (default=10.0)
+  stage=<stage of grid search>  (default=3)
+  nthreads=<number of threads>                      (default: machine-dependent)
+```
+
+In the first stage, we find MLEs for the two error rates $\epsilon_1$ and $\epsilon_2$ seperately. In the code below, `mapfile` denotes path to the genetic map file, `Nefile` denotes path to the output .ne file by IBDNe, and `hetrate1` and `hetrate2` denote the estimated heterozygosity rates using [`het.R`](https://github.com/tianxiaowen/mutation_unphased/blob/main/het.R) above.
 
 ```
 cat chr${i}/triosgt.maf0.25.2.5-6cM.txt | java -jar ../addGC.v3.jar map=${mapfile} ne=${Nefile} out=chr${i}/mle_epsilon1 mu.start=1.0E-8 mu.end=1.7E-8 mu.step=1.0E-9 gc.start=5E-7 gc.end=5E-6 gc.step=5.0E-8 theta1=${hetrate1} theta2={hetrate2} stage=1 err1.start=1.0E-13 err1.ratio=10
