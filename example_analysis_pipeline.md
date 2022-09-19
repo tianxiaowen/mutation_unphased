@@ -127,7 +127,7 @@ Next, run the script [`gtcountpy_split.sh`](https://github.com/tianxiaowen/mutat
 - `ibdfile`: path to the IBD file
 - `mapfile`: path to the genetic maps
 - `idfile`: path to a text file that has the ID names of all samples as a single column
-- `usephase`: if usephase=true, the phase will be used as given without adjustment
+- `usephase`: if usephase=true, the phase for rare variants will be used as given without adjustment
 
 ```
 gtcountpy_split.sh $chr $j ${ibdfile} ${mapfile} ${idfile} ${usephase}
